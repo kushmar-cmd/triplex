@@ -9,7 +9,8 @@ export default async (req, context) => {
       "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: "google/gemma-3-12b-it:free",
+      model: "meta-llama/llama-3.1-8b-instruct:free",
+
       messages: [{ role: "user", content: "say hi" }]
     })
   });
