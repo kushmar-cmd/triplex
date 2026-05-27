@@ -9,7 +9,7 @@ export default async (req, context) => {
       "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: "nvidia/nemotron-3-8b-instruct:free",
+      model: "nvidia/nemotron-3-super-120b-a12b:free",
 
 
       messages: [{ role: "user", content: "say hi" }]
