@@ -9,7 +9,8 @@ export default async (req, context) => {
       "Authorization": `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: "mistralai/mistral-7b-instruct:free",
+      model: "nvidia/nemotron-3-8b-instruct:free",
+
 
       messages: [{ role: "user", content: "say hi" }]
     })
