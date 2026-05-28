@@ -248,7 +248,7 @@ async function planTrip(){
   document.querySelectorAll('.step').forEach(s=>{s.classList.remove('on','done');});
   animSteps();
   try{
-    const res=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({destination:dest,adults,kids,days,budget,tripType:ttype})});
+    const res=await fetch('https://fragrant-dream-be5a.kushmar.workers.dev/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({destination:dest,adults,kids,days,budget,tripType:ttype})});
     if(!res.ok){const errBody=await res.text();throw new Error('HTTP '+res.status+': '+errBody);}
     const trip=JSON.parse(await res.text());
     renderAll(trip,dest,adults,days);
