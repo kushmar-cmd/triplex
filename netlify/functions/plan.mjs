@@ -29,7 +29,7 @@ export default async (req, context) => {
         "X-Title": "TripLex"
       },
       body: JSON.stringify({
-        model: "nvidia/nemotron-3-super-120b-a12b:free",
+       model: "openai/gpt-oss-120b:free",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 3000
       })
