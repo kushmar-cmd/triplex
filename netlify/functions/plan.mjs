@@ -11,10 +11,10 @@ export default async (req, context) => {
   const kidsText = kids && kids.length ? ` + ילדים בגילאי ${kids.join(", ")}` : "";
   const travelers = `${adults} מבוגרים${kidsText}`;
 
-  const prompt = `תכנן טיול ל${destination} עבור ${travelers}, ${days} ימים, תקציב ${budget}.
-החזר JSON בלבד ללא backticks:
-{"destination_en":"ENGLISH","destination_he":"${destination}","currency":"USD","season_note":"בדוק תחזית","flights":[{"airline":"El Al","from":"TLV","to":"קוד","duration":"3 שעות","stops":"ישיר","price_usd":500,"tip":"הזמן מראש"}],"days":[{"day":1,"theme":"גילוי","area":"מרכז","activities":[{"time":"09:00","name":"אטרקציה","type":"museum","description":"ביקור מרתק במקום המפורסם.","price_usd":15,"duration":"2 שעות","emoji":"🏛","tip":"בוא בבוקר"}]}],"restaurants":[{"name":"מסעדה","cuisine":"מקומי","price_range":"$$","rating":4.5,"must_order":"מנה","area":"מרכז","why":"מומלץ"}],"transport":[{"type":"metro","name":"רכבת","icon":"🚇","description":"זול ומהיר","price":"$5/יום","tip":"קנה כרטיס יומי"}],"budget":{"flights":500,"hotels":600,"food":300,"attractions":150,"transport":100,"misc":80,"total_per_person":1230},"tips":[{"category":"ויזה","text":"בדוק מראש"},{"category":"כסף","text":"כרטיס ללא עמלה"}]}
-צור ${days} ימים עם 3 פעילויות ליום, 3 טיסות, 4 מסעדות, 3 תחבורות. נתונים אמיתיים ל${destination}.`;
+  const prompt = `אתה מומחה ישראלי בתכנון טיולים. תכנן טיול ל${destination} עבור ${travelers}, ${days} ימים, תקציב ${budget}, סוג: ${tripType}.
+החזר JSON בלבד ללא backticks ללא הסברים:
+{"destination_en":"ENGLISH","destination_he":"עברית","currency":"מטבע ₪","season_note":"מזג אוויר","flights":[{"airline":"שם","from":"TLV","to":"קוד","duration":"X שעות","stops":"ישיר","price_usd":600,"tip":"טיפ"}],"days":[{"day":1,"theme":"נושא","area":"אזור","activities":[{"time":"09:00","name":"שם","type":"museum","description":"תיאור 2 משפטים","price_usd":0,"duration":"2 שעות","emoji":"🏛","tip":"טיפ"}]}],"restaurants":[{"name":"שם","cuisine":"מטבח","price_range":"$$","rating":4.5,"must_order":"מנה","area":"שכונה","why":"סיבה"}],"transport":[{"type":"metro","name":"שם","icon":"🚇","description":"תיאור","price":"$10/יום","tip":"טיפ"}],"budget":{"flights":600,"hotels":800,"food":400,"attractions":200,"transport":150,"misc":100,"total_per_person":1650},"tips":[{"category":"ויזה","text":"..."},{"category":"כסף","text":"..."},{"category":"תרבות","text":"..."},{"category":"בטיחות","text":"..."},{"category":"אפליקציות","text":"..."},{"category":"שפה","text":"..."}]}
+דרישות: ${days} ימים עם 4 פעילויות ליום, 3 טיסות שונות, 6 מסעדות, 4 תחבורות. נתונים אמיתיים ל${destination}.`;
 
   const apiKey = Netlify.env.get("OPENROUTER_API_KEY");
   if (!apiKey) return new Response(JSON.stringify({error:"Missing API key"}), {status:500});
@@ -29,9 +29,9 @@ export default async (req, context) => {
         "X-Title": "TripLex"
       },
       body: JSON.stringify({
-       model: "openai/gpt-oss-120b:free",
+        model: "openai/gpt-oss-120b:free",
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 3000
+        max_tokens: 8000
       })
     });
 

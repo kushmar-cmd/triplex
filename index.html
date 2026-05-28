@@ -249,7 +249,7 @@ async function planTrip(){
   animSteps();
   try{
     const res=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({destination:dest,adults,kids,days,budget,tripType:ttype})});
-    if(!res.ok)throw new Error('server error');
+    if(!res.ok){const errBody=await res.text();throw new Error('HTTP '+res.status+': '+errBody);}
     const trip=JSON.parse(await res.text());
     renderAll(trip,dest,adults,days);
     document.getElementById('loading').classList.remove('on');
@@ -260,7 +260,7 @@ async function planTrip(){
     window.scrollTo(0,0);
   }catch(e){
     document.getElementById('loading').classList.remove('on');
-    alert('שגיאה בטעינה, אנא נסה שוב');
+    alert('שגיאה: ' + e.message);
   }
 }
 
