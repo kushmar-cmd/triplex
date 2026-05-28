@@ -31,7 +31,7 @@ export default async (req, context) => {
       body: JSON.stringify({
         model: "openai/gpt-oss-120b:free",
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 8000
+        max_tokens: 1500
       })
     });
 
