@@ -311,12 +311,11 @@ function wikiImg(wikiName, fallbackQ, seed) {
 }
 function setWikiImg(imgEl, wikiName, fallbackQ, seed) {
   if (!wikiName) { imgEl.src = uimg(fallbackQ, seed); return; }
-  fetch('https://en.wikipedia.org/w/api.php?action=query&titles='+encodeURIComponent(wikiName)+'&prop=pageimages&format=json&pithumbsize=400&origin=*')
+  // Use Wikipedia REST API which supports CORS
+  fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(wikiName.replace(/ /g,'_')))
     .then(r=>r.json())
     .then(d=>{
-      const pages = d.query && d.query.pages;
-      const page = pages && Object.values(pages)[0];
-      const src = page && page.thumbnail && page.thumbnail.source;
+      const src = d.thumbnail && d.thumbnail.source;
       imgEl.src = src || uimg(fallbackQ, seed);
     })
     .catch(()=>{ imgEl.src = uimg(fallbackQ, seed); });
