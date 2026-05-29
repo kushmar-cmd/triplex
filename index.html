@@ -113,6 +113,17 @@ input::placeholder{text-align:right;direction:rtl}
 .info-box{background:rgba(43,108,176,.07);border:1px solid rgba(43,108,176,.18);border-radius:13px;padding:13px 17px;font-size:13px;color:var(--sky);margin-top:8px}
 .info-box a{color:var(--sky);font-weight:700}
 .rest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.hotel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.hotel-card{background:white;border-radius:16px;overflow:hidden;box-shadow:0 3px 16px rgba(26,18,9,.09);transition:transform .25s;cursor:pointer}
+.hotel-card:hover{transform:translateY(-3px)}
+.hotel-img{height:160px;width:100%;object-fit:cover;background:linear-gradient(135deg,#e8d5b0,#c9b480);display:flex;align-items:center;justify-content:center;font-size:44px}
+.hotel-body{padding:16px}
+.hotel-name{font-family:"Playfair Display",serif;font-size:17px;margin-bottom:4px}
+.hotel-stars{color:#f39c12;font-size:16px;margin-bottom:6px}
+.hotel-price{font-size:18px;font-weight:700;color:var(--sage);margin-bottom:6px}
+.hotel-area{font-size:12px;color:#6b5c3e;margin-bottom:8px}
+.hotel-why{font-size:12px;color:#4a3c28}
+.book-btn{display:inline-block;margin-top:10px;background:var(--sky);color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:Heebo;text-decoration:none}
 .rest-card{background:white;border-radius:16px;overflow:hidden;box-shadow:0 3px 16px rgba(26,18,9,.09);transition:transform .25s;cursor:pointer}
 .rest-card:hover{transform:translateY(-3px)}
 .act-card{cursor:pointer}
@@ -228,7 +239,8 @@ input::placeholder{text-align:right;direction:rtl}
     <button class="tab" onclick="sw('restaurants',this)">מסעדות</button>
     <button class="tab" onclick="sw('transport',this)">תחבורה</button>
     <button class="tab" onclick="sw('budget',this)">תקציב</button>
-    <button class="tab" onclick="sw('tips',this)">טיפים</button>
+    <button class="tab" onclick="sw('hotels',this)">🏨 מלונות</button>
+    <button class="tab" onclick="sw('tips',this)">💡 טיפים</button>
   </div>
   <div class="content">
     <div class="tab-sec on" id="tab-itinerary"><div class="sec-title">המסלול המלא</div><div class="sec-sub">בוקר, צהריים, ערב</div><div id="c-itin"></div></div>
@@ -236,6 +248,7 @@ input::placeholder{text-align:right;direction:rtl}
     <div class="tab-sec" id="tab-restaurants"><div class="sec-title">מסעדות מומלצות</div><div class="sec-sub">לכל תקציב ורגב</div><div id="c-rest"></div></div>
     <div class="tab-sec" id="tab-transport"><div class="sec-title">תחבורה מקומית</div><div class="sec-sub">כל האפשרויות</div><div id="c-trans"></div></div>
     <div class="tab-sec" id="tab-budget"><div class="sec-title">סיכום תקציב</div><div class="sec-sub">הערכת עלויות מפורטת</div><div id="c-budget"></div></div>
+    <div class="tab-sec" id="tab-hotels"><div class="sec-title">מלונות מומלצים</div><div class="sec-sub">לכל תקציב ורמה</div><div id="c-hotels"></div></div>
     <div class="tab-sec" id="tab-tips"><div class="sec-title">טיפים מקצועיים</div><div class="sec-sub">כל מה שכדאי לדעת</div><div id="c-tips"></div></div>
   </div>
 </div>
@@ -292,6 +305,22 @@ async function planTrip(){
 }
 
 function uimg(q,s){return 'https://source.unsplash.com/400x300/?'+encodeURIComponent(q)+'&sig='+s;}
+function wikiImg(wikiName, fallbackQ, seed) {
+  if (!wikiName) return uimg(fallbackQ, seed);
+  return 'https://en.wikipedia.org/w/api.php?action=query&titles='+encodeURIComponent(wikiName)+'&prop=pageimages&format=json&pithumbsize=400&origin=*';
+}
+function setWikiImg(imgEl, wikiName, fallbackQ, seed) {
+  if (!wikiName) { imgEl.src = uimg(fallbackQ, seed); return; }
+  fetch('https://en.wikipedia.org/w/api.php?action=query&titles='+encodeURIComponent(wikiName)+'&prop=pageimages&format=json&pithumbsize=400&origin=*')
+    .then(r=>r.json())
+    .then(d=>{
+      const pages = d.query && d.query.pages;
+      const page = pages && Object.values(pages)[0];
+      const src = page && page.thumbnail && page.thumbnail.source;
+      imgEl.src = src || uimg(fallbackQ, seed);
+    })
+    .catch(()=>{ imgEl.src = uimg(fallbackQ, seed); });
+}
 
 function renderAll(t,dest,adults,days){
   const n=(parseInt(adults)||2)+kids.length;
@@ -320,14 +349,27 @@ function renderAll(t,dest,adults,days){
     })()+
     '<div class="timeline">'+(day.activities||[]).map((a,ai)=>{
       const img=uimg((t.destination_en||dest)+' '+(a.type||'travel'),di*10+ai);
+      const actImgId='aimg-'+di+'-'+ai;
       const mq=a.maps_query||(a.name+' '+dest);
       const wiki=a.wiki_summary||'';
       const cardId='act-'+di+'-'+ai;
       window._modalData=window._modalData||{};
       window._modalData[cardId]={name:a.name,tag:a.type,desc:a.description,wikiName:a.wiki_name||a.name,mq:mq,img:img,ta:null};
-      return '<div class="act-card" onclick="var d=window._modalData[\''+cardId+'\'];openModal(d.name,d.tag,d.desc,d.wikiName,d.mq,d.img,d.ta)" ><img class="act-img" src="'+img+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="act-ph" style="display:none">'+a.emoji+'</div><div class="act-body"><div class="act-time">'+a.time+' · '+a.duration+'</div><div class="act-name">'+a.emoji+' '+a.name+'</div><div class="act-desc">'+a.description+'</div><div class="act-footer"><span class="tag ta">'+a.type+'</span>'+(a.tip?'<span class="tag ts">💡 '+a.tip+'</span>':'')+'<span class="act-price">'+(a.price_usd===0?'✓ חינם':a.price_usd?'$'+a.price_usd:'')+'</span><span style="font-size:11px;color:var(--sky);margin-right:auto">לחץ לפרטים ›</span></div></div></div>';
+      return '<div class="act-card" onclick="var d=window._modalData[\''+cardId+'\'];openModal(d.name,d.tag,d.desc,d.wikiName,d.mq,d.img,d.ta)" ><img class="act-img" id="'+actImgId+'" src="'+img+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="act-ph" style="display:none">'+a.emoji+'</div><div class="act-body"><div class="act-time">'+a.time+' · '+a.duration+'</div><div class="act-name">'+a.emoji+' '+a.name+'</div><div class="act-desc">'+a.description+'</div><div class="act-footer"><span class="tag ta">'+a.type+'</span>'+(a.tip?'<span class="tag ts">💡 '+a.tip+'</span>':'')+'<span class="act-price">'+(a.price_usd===0?'✓ חינם':a.price_usd?'$'+a.price_usd:'')+'</span><span style="font-size:11px;color:var(--sky);margin-right:auto">לחץ לפרטים ›</span></div></div></div>';
     }).join('')+'</div></div></div>'
   ).join('');
+
+  // Set Wikimedia images for activities
+  setTimeout(() => {
+    (t.days||[]).forEach((day, di) => {
+      (day.activities||[]).forEach((a, ai) => {
+        const imgEl = document.getElementById('aimg-'+di+'-'+ai);
+        if (imgEl && a.wiki_name) {
+          setWikiImg(imgEl, a.wiki_name, (t.destination_en||dest)+' '+(a.type||'travel'), di*10+ai);
+        }
+      });
+    });
+  }, 100);
 
   // Build day maps with Leaflet
   setTimeout(() => {
@@ -385,6 +427,16 @@ function renderAll(t,dest,adults,days){
     [['✈ טיסות',b.flights?(b.flights*n):null],['🏨 לינה',b.hotels],['🍜 אוכל',b.food],['🎫 אטרקציות',b.attractions],['🚇 תחבורה',b.transport],['🛍 שונות',b.misc]].filter(([,v])=>v).map(([l,v])=>'<div class="bi"><div class="bi-l">'+l+'</div><div class="bi-a">$'+v.toLocaleString()+'</div></div>').join('')+
     '</div>'+(total?'<div class="budget-total"><div><div class="bt-label">סה"כ לכל הקבוצה</div><div class="bt-sub">$'+(b.total_per_person||0).toLocaleString()+' לנפש</div></div><div class="bt-amount">$'+total.toLocaleString()+'</div></div>':'')+'</div>'+
     '<div class="save-box">💡 חיסכון: טיסות 6-10 שבועות מראש · Booking.com למלונות · כרטיס אשראי ללא עמלות</div>';
+
+  // HOTELS
+  document.getElementById('c-hotels').innerHTML='<div class="hotel-grid">'+(t.hotels||[]).map((h,i)=>{
+    const stars='★'.repeat(h.stars||3)+'☆'.repeat(5-(h.stars||3));
+    const bookUrl='https://www.booking.com/search.html?ss='+encodeURIComponent(h.booking_query||h.name);
+    const hid='hotel-'+i;
+    window._mapUrls=window._mapUrls||{};
+    window._mapUrls[hid]=bookUrl;
+    return '<div class="hotel-card" onclick="window.open(window._mapUrls[\''+hid+'\'],\'_blank\')">'      +'<div class="hotel-img">🏨</div>'      +'<div class="hotel-body">'      +'<div class="hotel-name">'+h.name+'</div>'      +'<div class="hotel-stars">'+stars+' '+h.stars+' כוכבים</div>'      +'<div class="hotel-price">$'+h.price_per_night+' / לילה</div>'      +'<div class="hotel-area">📍 '+h.area+'</div>'      +'<div class="hotel-why">'+h.why+'</div>'      +'<a class="book-btn">📅 הזמן ב-Booking</a>'      +'</div></div>';
+  }).join('')+'</div>';
 
   // TIPS
   const cc={ויזה:'#e8a040',כסף:'#4A7C59',תרבות:'#2B6CB0',בטיחות:'#c0392b',אפליקציות:'#8e44ad',שפה:'#1abc9c'};
