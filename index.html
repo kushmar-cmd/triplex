@@ -122,7 +122,8 @@ input::placeholder{text-align:right;direction:rtl}
 #modal-footer{display:flex;gap:10px}
 .mbtn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:Heebo;text-decoration:none}
 .mbtn-map{background:var(--sky)}.mbtn-map:hover{background:#1e5a9e}
-.mbtn-search{background:var(--sage)}.mbtn-search:hover{background:#3a6647}
+.mbtn-wiki{background:#4A7C59}.mbtn-wiki:hover{background:#3a6647}
+.mbtn-ta{background:#00af87}.mbtn-ta:hover{background:#008c6c}
 .rest-img{height:150px;width:100%;object-fit:cover}
 .rest-ph{height:150px;background:linear-gradient(135deg,#e8d5b0,#c9b480);display:flex;align-items:center;justify-content:center;font-size:44px}
 .rest-body{padding:14px}
@@ -303,8 +304,8 @@ function renderAll(t,dest,adults,days){
       const wiki=a.wiki_summary||'';
       const cardId='act-'+di+'-'+ai;
       window._modalData=window._modalData||{};
-      window._modalData[cardId]={name:a.name,tag:a.type,desc:a.description,wiki:wiki,mq:mq,img:img};
-      return '<div class="act-card" onclick="var d=window._modalData[\''+cardId+'\'];openModal(d.name,d.tag,d.desc,d.wiki,d.mq,d.img)" ><img class="act-img" src="'+img+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="act-ph" style="display:none">'+a.emoji+'</div><div class="act-body"><div class="act-time">'+a.time+' · '+a.duration+'</div><div class="act-name">'+a.emoji+' '+a.name+'</div><div class="act-desc">'+a.description+'</div><div class="act-footer"><span class="tag ta">'+a.type+'</span>'+(a.tip?'<span class="tag ts">💡 '+a.tip+'</span>':'')+'<span class="act-price">'+(a.price_usd===0?'✓ חינם':a.price_usd?'$'+a.price_usd:'')+'</span><span style="font-size:11px;color:var(--sky);margin-right:auto">לחץ לפרטים ›</span></div></div></div>';
+      window._modalData[cardId]={name:a.name,tag:a.type,desc:a.description,wikiName:a.wiki_name||a.name,mq:mq,img:img,ta:null};
+      return '<div class="act-card" onclick="var d=window._modalData[\''+cardId+'\'];openModal(d.name,d.tag,d.desc,d.wikiName,d.mq,d.img,d.ta)" ><img class="act-img" src="'+img+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="act-ph" style="display:none">'+a.emoji+'</div><div class="act-body"><div class="act-time">'+a.time+' · '+a.duration+'</div><div class="act-name">'+a.emoji+' '+a.name+'</div><div class="act-desc">'+a.description+'</div><div class="act-footer"><span class="tag ta">'+a.type+'</span>'+(a.tip?'<span class="tag ts">💡 '+a.tip+'</span>':'')+'<span class="act-price">'+(a.price_usd===0?'✓ חינם':a.price_usd?'$'+a.price_usd:'')+'</span><span style="font-size:11px;color:var(--sky);margin-right:auto">לחץ לפרטים ›</span></div></div></div>';
     }).join('')+'</div></div>'
   ).join('');
 
@@ -322,8 +323,8 @@ function renderAll(t,dest,adults,days){
     const rdesc=r.description||r.why||'';
     const restId='rest-'+i;
     window._modalData=window._modalData||{};
-    window._modalData[restId]={name:r.name,tag:r.cuisine+' · '+r.price_range,desc:rdesc,wiki:'חובה לנסות: '+(r.must_order||''),mq:rmq,img:img};
-    return '<div class="rest-card" onclick="var d=window._modalData[\''+restId+'\'];openModal(d.name,d.tag,d.desc,d.wiki,d.mq,d.img)" ><img class="rest-img" src="'+img+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="rest-ph" style="display:none">🍽</div><div class="rest-body"><div class="rest-name">'+r.name+'</div><div class="stars">'+'★'.repeat(Math.round(r.rating||4))+'☆'.repeat(5-Math.round(r.rating||4))+' '+r.rating+'</div><div class="rest-tags"><span class="tag ta">'+r.cuisine+'</span><span class="tag tb">'+r.area+'</span><span class="tag ts">'+r.price_range+'</span></div>'+(r.must_order?'<p style="font-size:12px;color:#6b5c3e;margin-bottom:5px">🍴 חובה: '+r.must_order+'</p>':'')+(r.why?'<p style="font-size:12px;color:#4a3c28">'+r.why+'</p>':'')+'<p style="font-size:11px;color:var(--sky);margin-top:6px">לחץ לפרטים ›</p></div></div>';
+    window._modalData[restId]={name:r.name,tag:r.cuisine+' · '+r.price_range,desc:rdesc,wikiName:null,mq:rmq,img:img,ta:r.tripadvisor_query||r.name};
+    return '<div class="rest-card" onclick="var d=window._modalData[\''+restId+'\'];openModal(d.name,d.tag,d.desc,d.wikiName,d.mq,d.img,d.ta)" ><img class="rest-img" src="'+img+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="rest-ph" style="display:none">🍽</div><div class="rest-body"><div class="rest-name">'+r.name+'</div><div class="stars">'+'★'.repeat(Math.round(r.rating||4))+'☆'.repeat(5-Math.round(r.rating||4))+' '+r.rating+'</div><div class="rest-tags"><span class="tag ta">'+r.cuisine+'</span><span class="tag tb">'+r.area+'</span><span class="tag ts">'+r.price_range+'</span></div>'+(r.must_order?'<p style="font-size:12px;color:#6b5c3e;margin-bottom:5px">🍴 חובה: '+r.must_order+'</p>':'')+(r.why?'<p style="font-size:12px;color:#4a3c28">'+r.why+'</p>':'')+'<p style="font-size:11px;color:var(--sky);margin-top:6px">לחץ לפרטים ›</p></div></div>';
   }).join('')+'</div>';
 
   // TRANSPORT
@@ -346,16 +347,23 @@ function renderAll(t,dest,adults,days){
 
 
 // Modal functions
-function openModal(name, tag, desc, wiki, mapsQuery, img) {
+function openModal(name, tag, desc, wikiName, mapsQuery, img, taQuery) {
   document.getElementById("modal-name").textContent = name;
   document.getElementById("modal-tag").textContent = tag;
   document.getElementById("modal-desc").textContent = desc;
-  document.getElementById("modal-wiki-text").textContent = wiki || "מידע נוסף זמין בחיפוש Google.";
+  document.getElementById("modal-wiki-text").textContent = "לחץ על Wikipedia לקריאת מידע מפורט על המקום.";
   document.getElementById("modal-img").src = img || "";
   const mapsUrl = "https://www.google.com/maps/search/" + encodeURIComponent(mapsQuery || name);
-  const searchUrl = "https://www.google.com/search?q=" + encodeURIComponent(name);
+  const wikiUrl = "https://he.wikipedia.org/wiki/" + encodeURIComponent(wikiName || name);
   document.getElementById("modal-map-btn").href = mapsUrl;
-  document.getElementById("modal-search-btn").href = searchUrl;
+  document.getElementById("modal-wiki-btn").href = wikiUrl;
+  const taBtn = document.getElementById("modal-ta-btn");
+  if (taQuery) {
+    taBtn.href = "https://www.tripadvisor.com/Search?q=" + encodeURIComponent(taQuery);
+    taBtn.style.display = "flex";
+  } else {
+    taBtn.style.display = "none";
+  }
   document.getElementById("modal-overlay").classList.add("on");
   document.body.style.overflow = "hidden";
 }
@@ -376,8 +384,9 @@ document.addEventListener("keydown", e => { if(e.key==="Escape") closeModal(); }
     <div id="modal-desc"></div>
     <div id="modal-wiki"><b>📖 רקע היסטורי</b><span id="modal-wiki-text"></span></div>
     <div id="modal-footer">
-      <a id="modal-map-btn" href="#" target="_blank" class="mbtn mbtn-map">🗺 פתח במפה</a>
-      <a id="modal-search-btn" href="#" target="_blank" class="mbtn mbtn-search">🔍 חפש עוד</a>
+      <a id="modal-map-btn" href="#" target="_blank" class="mbtn mbtn-map">🗺 Google Maps</a>
+      <a id="modal-wiki-btn" href="#" target="_blank" class="mbtn mbtn-wiki">📖 Wikipedia</a>
+      <a id="modal-ta-btn" href="#" target="_blank" class="mbtn mbtn-ta" style="display:none">⭐ TripAdvisor</a>
     </div>
   </div>
 </div>
