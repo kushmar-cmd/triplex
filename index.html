@@ -330,6 +330,11 @@ function setWikiImg(imgEl, wikiName, fallbackQ, seed, modalKey) {
 }
 
 function renderAll(t,dest,adults,days){
+  // Store for export
+  _currentTrip = t;
+  _currentDest = dest;
+  _currentDays = days;
+  _currentBudget = budget;
   const n=(parseInt(adults)||2)+kids.length;
   document.getElementById('r-name').innerHTML=(t.destination_en||dest.toUpperCase())+' <span>✈</span>';
   document.getElementById('r-meta').innerHTML=[
@@ -455,6 +460,99 @@ function renderAll(t,dest,adults,days){
 
 
 // Modal functions
+// ── EXPORT FUNCTIONS ──────────────────────────────
+let _currentTrip = null;
+let _currentDest = '';
+let _currentDays = '';
+let _currentBudget = '';
+
+function buildMarkdown(t, dest, days, budget) {
+  if (!t) return '';
+  let md = '# תכנית טיול ל' + (t.destination_he || dest) + '\n\n';
+  md += '**' + days + ' ימים · ' + budget + '**\n\n';
+  if (t.season_note) md += '🌤 ' + t.season_note + '\n\n';
+  
+  md += '## ✈ טיסות\n';
+  (t.flights||[]).forEach(f => {
+    md += '- **' + f.airline + '** TLV→' + f.to + ' · ' + f.duration + ' · $' + f.price_usd + '\n';
+  });
+  md += '\n';
+  
+  (t.days||[]).forEach(day => {
+    md += '## יום ' + day.day + ' — ' + day.theme + ' (' + day.area + ')\n';
+    (day.activities||[]).forEach(a => {
+      md += '- **' + a.time + '** ' + (a.emoji||'') + ' ' + a.name;
+      if (a.price_usd === 0) md += ' (חינם)';
+      else if (a.price_usd) md += ' ($' + a.price_usd + ')';
+      md += '\n  ' + a.description + '\n';
+      if (a.tip) md += '  💡 ' + a.tip + '\n';
+    });
+    md += '\n';
+  });
+  
+  md += '## 🍽 מסעדות מומלצות\n';
+  (t.restaurants||[]).forEach(r => {
+    md += '- **' + r.name + '** (' + r.cuisine + ', ' + r.price_range + ') — חובה: ' + r.must_order + '\n';
+  });
+  md += '\n';
+  
+  md += '## 💰 תקציב משוער\n';
+  if (t.budget) {
+    md += '- טיסות: $' + (t.budget.flights||0) + '\n';
+    md += '- לינה: $' + (t.budget.hotels||0) + '\n';
+    md += '- אוכל: $' + (t.budget.food||0) + '\n';
+    md += '- סה"כ לנפש: $' + (t.budget.total_per_person||0) + '\n';
+  }
+  
+  return md;
+}
+
+function exportMD() {
+  if (!_currentTrip) return;
+  const md = buildMarkdown(_currentTrip, _currentDest, _currentDays, _currentBudget);
+  const blob = new Blob([md], {type:'text/markdown;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'triplex-' + (_currentTrip.destination_en||_currentDest).toLowerCase().replace(/\s+/g,'-') + '.md';
+  a.click();
+}
+
+function saveHTML() {
+  if (!_currentTrip) return;
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'triplex-' + (_currentTrip.destination_en||_currentDest).toLowerCase().replace(/\s+/g,'-') + '.html';
+  a.click();
+}
+
+function showAIShare() {
+  if (!_currentTrip) return;
+  const md = buildMarkdown(_currentTrip, _currentDest, _currentDays, _currentBudget);
+  const prompt = 'הנה תכנית הטיול שלי:\n\n' + md + '\n\nבבקשה הרחב את תכנית הטיול עם:\n1. המלצות ספציפיות יותר לכל אטרקציה\n2. טיפים מקומיים שאנשים לא מכירים\n3. חלופות לכל יום\n4. הצעות לפי מזג אוויר';
+  
+  document.getElementById('ai-prompt-box').textContent = prompt;
+  
+  const enc = encodeURIComponent(prompt);
+  document.getElementById('claude-link').href = 'https://claude.ai/new?q=' + enc;
+  document.getElementById('gpt-link').href = 'https://chatgpt.com/?q=' + enc;
+  document.getElementById('gemini-link').href = 'https://gemini.google.com/app?q=' + enc;
+  
+  document.getElementById('ai-modal').style.display = 'flex';
+}
+
+function copyAIPrompt() {
+  const text = document.getElementById('ai-prompt-box').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = '✅ הועתק!';
+    setTimeout(() => btn.textContent = '📋 העתק פרומפט', 2000);
+  });
+}
+
+// ── END EXPORT FUNCTIONS ────────────────────────────
+
 function openModal(name, tag, desc, wikiName, mapsQuery, img, taQuery) {
   document.getElementById("modal-name").textContent = name;
   document.getElementById("modal-tag").textContent = tag;
@@ -481,6 +579,31 @@ function closeModal() {
 }
 document.addEventListener("keydown", e => { if(e.key==="Escape") closeModal(); });
 </script>
+
+<!-- AI SHARE MODAL -->
+<div id="ai-modal" onclick="if(event.target===this)this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:10000;align-items:center;justify-content:center;padding:20px;direction:rtl">
+  <div style="background:#1a1209;border:1px solid rgba(245,237,214,.15);border-radius:20px;max-width:520px;width:100%;padding:28px;position:relative">
+    <button onclick="document.getElementById('ai-modal').style.display='none'" style="position:absolute;top:14px;left:14px;background:none;border:none;color:#888;font-size:22px;cursor:pointer">×</button>
+    <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--sand);margin-bottom:6px">🤖 הרחב עם AI</div>
+    <div style="font-size:13px;color:rgba(245,237,214,.5);margin-bottom:20px">הפרומפט מוכן — בחר את ה-AI שלך</div>
+    <div id="ai-prompt-box" style="background:rgba(255,255,255,.05);border:1px solid rgba(245,237,214,.15);border-radius:12px;padding:14px;font-size:12px;color:rgba(245,237,214,.7);line-height:1.6;max-height:150px;overflow-y:auto;margin-bottom:16px;direction:rtl;text-align:right"></div>
+    <button onclick="copyAIPrompt()" style="width:100%;padding:10px;background:rgba(245,237,214,.08);border:1px solid rgba(245,237,214,.2);border-radius:10px;color:var(--sand);font-family:Heebo;font-size:13px;cursor:pointer;margin-bottom:16px">📋 העתק פרומפט</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <a id="claude-link" href="#" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(212,130,26,.15);border:1px solid rgba(212,130,26,.3);border-radius:12px;padding:14px;text-decoration:none;transition:all .2s">
+        <span style="font-size:24px">⚡</span>
+        <span style="font-size:12px;font-weight:700;color:var(--amber)">Claude</span>
+      </a>
+      <a id="gpt-link" href="#" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(74,124,89,.15);border:1px solid rgba(74,124,89,.3);border-radius:12px;padding:14px;text-decoration:none;transition:all .2s">
+        <span style="font-size:24px">🟢</span>
+        <span style="font-size:12px;font-weight:700;color:var(--sage)">ChatGPT</span>
+      </a>
+      <a id="gemini-link" href="#" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(43,108,176,.15);border:1px solid rgba(43,108,176,.3);border-radius:12px;padding:14px;text-decoration:none;transition:all .2s">
+        <span style="font-size:24px">💎</span>
+        <span style="font-size:12px;font-weight:700;color:var(--sky)">Gemini</span>
+      </a>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL -->
 <div id="modal-overlay" onclick="if(event.target===this)closeModal()">
