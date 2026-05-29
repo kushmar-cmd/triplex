@@ -240,12 +240,13 @@ input::placeholder{text-align:right;direction:rtl}
   </div>
   <div class="tabs">
     <button class="tab active" onclick="sw('itinerary',this)">מסלול</button>
+    <button class="tab on" onclick="sw('itinerary',this)">מסלול</button>
     <button class="tab" onclick="sw('flights',this)">טיסות</button>
     <button class="tab" onclick="sw('restaurants',this)">מסעדות</button>
+    <button class="tab" onclick="sw('hotels',this)">מלונות</button>
     <button class="tab" onclick="sw('transport',this)">תחבורה</button>
     <button class="tab" onclick="sw('budget',this)">תקציב</button>
-    <button class="tab" onclick="sw('hotels',this)">🏨 מלונות</button>
-    <button class="tab" onclick="sw('tips',this)">💡 טיפים</button>
+    <button class="tab" onclick="sw('tips',this)">טיפים</button>
   </div>
   <div class="content">
     <div class="tab-sec on" id="tab-itinerary"><div class="sec-title">המסלול המלא</div><div class="sec-sub">בוקר, צהריים, ערב</div><div id="c-itin"></div></div>
@@ -600,7 +601,7 @@ function openModal(name, tag, desc, wikiName, mapsQuery, img, taQuery) {
   document.getElementById("modal-wiki-text").textContent = "לחץ על Wikipedia לקריאת מידע מפורט על המקום.";
   document.getElementById("modal-img").src = img || "";
   const mapsUrl = "https://www.google.com/maps/search/" + encodeURIComponent(mapsQuery || name);
-  const wikiUrl = "https://he.wikipedia.org/wiki/" + encodeURIComponent(wikiName || name);
+  const wikiUrl = "https://en.wikipedia.org/wiki/" + encodeURIComponent(wikiName || name);
   document.getElementById("modal-map-btn").href = mapsUrl;
   document.getElementById("modal-wiki-btn").href = wikiUrl;
   const taBtn = document.getElementById("modal-ta-btn");
