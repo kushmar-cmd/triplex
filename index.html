@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>TripLex — מתכנן טיולים חכם</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Heebo:wght@300;400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 :root{--sand:#F5EDD6;--ink:#1A1209;--amber:#D4821A;--sky:#2B6CB0;--sage:#4A7C59;--blush:#E8C5A0;--cream:#FAF6EE}
@@ -72,6 +74,11 @@ input::placeholder{text-align:right;direction:rtl}
 .sec-sub{color:#6b5c3e;font-size:13px;margin-bottom:22px}
 .tab-sec{display:none}.tab-sec.on{display:block;animation:fadeUp .35s ease}
 .day-block{margin-bottom:40px}
+.day-map-wrap{border-radius:14px;overflow:hidden;margin-bottom:16px;cursor:pointer;position:relative;box-shadow:0 4px 16px rgba(26,18,9,.12)}
+.day-map-wrap:hover .map-overlay{opacity:1}
+.map-overlay{position:absolute;inset:0;background:rgba(26,18,9,.45);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .25s;z-index:1000;pointer-events:none}
+.map-overlay span{color:white;font-family:"Playfair Display",serif;font-size:16px;font-weight:700;background:rgba(212,130,26,.9);padding:10px 20px;border-radius:24px}
+.day-map{height:200px;width:100%;pointer-events:none}
 .day-hdr{display:flex;align-items:center;gap:13px;margin-bottom:14px;padding-bottom:13px;border-bottom:2px solid var(--blush)}
 .day-num{font-family:'Bebas Neue';font-size:56px;color:var(--amber);line-height:1;min-width:50px}
 .day-info h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--ink)}
@@ -297,8 +304,21 @@ function renderAll(t,dest,adults,days){
 
   // ITINERARY
   document.getElementById('c-itin').innerHTML=(t.days||[]).map((day,di)=>
-    '<div class="day-block"><div class="day-hdr"><div class="day-num">0'+day.day+'</div><div class="day-info"><h3>'+day.theme+'</h3><p>📍 '+day.area+'</p></div></div><div class="timeline">'+
-    (day.activities||[]).map((a,ai)=>{
+    '<div class="day-block"><div class="day-hdr"><div class="day-num">0'+day.day+'</div><div class="day-info"><h3>'+day.theme+'</h3><p>📍 '+day.area+'</p></div></div>'+
+    (()=>{
+      const acts=(day.activities||[]).filter(a=>a.lat&&a.lng);
+      if(acts.length<2) return '';
+      const wp=acts.map(a=>a.lat+','+a.lng).join('/');
+      const dest=acts[acts.length-1];
+      const gmUrl='https://www.google.com/maps/dir/'+acts.map(a=>encodeURIComponent(a.name)).join('/');
+      window._mapUrls=window._mapUrls||{};
+      window._mapUrls['day'+di]=gmUrl;
+      return '<div class="day-map-wrap" data-mapidx="'+di+'" onclick="var u=window._mapUrls[\'day\'+this.dataset.mapidx];if(u)window.open(u,\'_blank\')">'
+        +'<div class="map-overlay"><span>🗺 פתח מסלול יומי ב-Google Maps</span></div>'
+        +'<div class="day-map" id="daymap-'+di+'"></div>'
+        +'</div>';
+    })()+
+    '<div class="timeline">'+(day.activities||[]).map((a,ai)=>{
       const img=uimg((t.destination_en||dest)+' '+(a.type||'travel'),di*10+ai);
       const mq=a.maps_query||(a.name+' '+dest);
       const wiki=a.wiki_summary||'';
@@ -306,8 +326,37 @@ function renderAll(t,dest,adults,days){
       window._modalData=window._modalData||{};
       window._modalData[cardId]={name:a.name,tag:a.type,desc:a.description,wikiName:a.wiki_name||a.name,mq:mq,img:img,ta:null};
       return '<div class="act-card" onclick="var d=window._modalData[\''+cardId+'\'];openModal(d.name,d.tag,d.desc,d.wikiName,d.mq,d.img,d.ta)" ><img class="act-img" src="'+img+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="act-ph" style="display:none">'+a.emoji+'</div><div class="act-body"><div class="act-time">'+a.time+' · '+a.duration+'</div><div class="act-name">'+a.emoji+' '+a.name+'</div><div class="act-desc">'+a.description+'</div><div class="act-footer"><span class="tag ta">'+a.type+'</span>'+(a.tip?'<span class="tag ts">💡 '+a.tip+'</span>':'')+'<span class="act-price">'+(a.price_usd===0?'✓ חינם':a.price_usd?'$'+a.price_usd:'')+'</span><span style="font-size:11px;color:var(--sky);margin-right:auto">לחץ לפרטים ›</span></div></div></div>';
-    }).join('')+'</div></div>'
+    }).join('')+'</div></div></div>'
   ).join('');
+
+  // Build day maps with Leaflet
+  setTimeout(() => {
+    (t.days||[]).forEach((day, di) => {
+      const acts = (day.activities||[]).filter(a => a.lat && a.lng);
+      if (acts.length < 2) return;
+      const mapEl = document.getElementById('daymap-'+di);
+      if (!mapEl || mapEl._leaflet_id) return;
+      
+      const coords = acts.map(a => [a.lat, a.lng]);
+      const center = [
+        coords.reduce((s,c)=>s+c[0],0)/coords.length,
+        coords.reduce((s,c)=>s+c[1],0)/coords.length
+      ];
+      
+      const map = L.map(mapEl, {zoomControl:false, attributionControl:false, dragging:false, scrollWheelZoom:false}).setView(center, 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      L.polyline(coords, {color:'#D4821A', weight:3, opacity:0.9}).addTo(map);
+      
+      const icon = L.divIcon({className:'', html:'<div style="background:#D4821A;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3)">N</div>', iconSize:[28,28], iconAnchor:[14,14]});
+      
+      acts.forEach((a, i) => {
+        const iIcon = L.divIcon({className:'', html:'<div style="background:'+(i===0?'#4A7C59':i===acts.length-1?'#c0392b':'#2B6CB0')+';color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3)">'+(i+1)+'</div>', iconSize:[26,26], iconAnchor:[13,13]});
+        L.marker([a.lat, a.lng], {icon: iIcon}).addTo(map).bindTooltip(a.name, {permanent:false});
+      });
+      
+      map.fitBounds(coords, {padding:[20,20]});
+    });
+  }, 300);
 
   // FLIGHTS
   const de=encodeURIComponent(t.destination_en||dest);
