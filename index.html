@@ -230,7 +230,10 @@ input::placeholder{text-align:right;direction:rtl}
     <div class="hdr-inner">
       <button class="back-btn" onclick="goBack()">&#8592; תכנון חדש</button>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">
-        <button onclick="saveHTML()" style="background:var(--sage);border:none;border-radius:20px;padding:8px 18px;color:white;font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#128190; שמור דף HTML</button>
+        <button onclick="saveHTML()" style="background:var(--sage);border:none;border-radius:20px;padding:8px 18px;color:white;font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#128190; שמור HTML</button>
+        <button onclick="exportMD()" style="background:var(--amber);border:none;border-radius:20px;padding:8px 18px;color:var(--ink);font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#128196; ייצא מסלול</button>
+        <button onclick="showAIShare()" style="background:#8e44ad;border:none;border-radius:20px;padding:8px 18px;color:white;font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#129302; הרחב עם AI</button>
+      </div>
         <button onclick="exportMD()" style="background:var(--amber);border:none;border-radius:20px;padding:8px 18px;color:var(--ink);font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#128196; ייצא מסלול</button>
         <button onclick="showAIShare()" style="background:#8e44ad;border:none;border-radius:20px;padding:8px 18px;color:white;font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#129302; הרחב עם AI</button>
       </div>
@@ -356,7 +359,7 @@ function wikiImg(wikiName, fallbackQ, seed) {
 }
 function setWikiImg(imgEl, wikiName, fallbackQ, seed, modalKey) {
   if (!wikiName) { imgEl.src = uimg(fallbackQ, seed); return; }
-  fetch('https://he.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(wikiName.replace(/ /g,'_')))
+  fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(wikiName.replace(/ /g,'_')))
     .then(r=>r.json())
     .then(d=>{
       const src = (d.originalimage && d.originalimage.source) || (d.thumbnail && d.thumbnail.source);
