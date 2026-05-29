@@ -216,11 +216,11 @@ input::placeholder{text-align:right;direction:rtl}
   <div class="load-title" id="load-dest">מתכנן את הטיול...</div>
   <div class="load-sub">AI מאסף מידע ובונה מסלול אישי</div>
   <div class="steps">
-    <div class="step" id="s1"><div class="step-dot"></div>מחפש טיסות מוזלות מ-TLV</div>
-    <div class="step" id="s2"><div class="step-dot"></div>בודק אטרקציות ומלונות</div>
-    <div class="step" id="s3"><div class="step-dot"></div>בונה מסלול יומי מפורט</div>
-    <div class="step" id="s4"><div class="step-dot"></div>מחשב תקציב ומחירים</div>
-    <div class="step" id="s5"><div class="step-dot"></div>מסיים ומעצב</div>
+    <div class="step" id="s1"><div class="step-dot"></div>✈ מחפש טיסות ומלונות</div>
+    <div class="step" id="s2"><div class="step-dot"></div>🗓 בונה ימים 1-4 של המסלול</div>
+    <div class="step" id="s3"><div class="step-dot"></div>🗓 בונה את שאר ימי המסלול</div>
+    <div class="step" id="s4"><div class="step-dot"></div>🍽 מוסיף מסעדות ותחבורה</div>
+    <div class="step" id="s5"><div class="step-dot"></div>✨ מסיים ומעצב</div>
   </div>
 </div>
 
@@ -229,6 +229,11 @@ input::placeholder{text-align:right;direction:rtl}
     <div class="orb o1" style="opacity:.12"></div><div class="orb o2" style="opacity:.1"></div>
     <div class="hdr-inner">
       <button class="back-btn" onclick="goBack()">&#8592; תכנון חדש</button>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">
+        <button onclick="saveHTML()" style="background:var(--sage);border:none;border-radius:20px;padding:8px 18px;color:white;font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#128190; שמור דף HTML</button>
+        <button onclick="exportMD()" style="background:var(--amber);border:none;border-radius:20px;padding:8px 18px;color:var(--ink);font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#128196; ייצא מסלול</button>
+        <button onclick="showAIShare()" style="background:#8e44ad;border:none;border-radius:20px;padding:8px 18px;color:white;font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#129302; הרחב עם AI</button>
+      </div>
       <div class="trip-name" id="r-name">TOKYO <span>&#x2708;</span></div>
       <div class="meta-row" id="r-meta"></div>
     </div>
@@ -279,28 +284,63 @@ async function planTrip(){
   const adults=document.getElementById('adults').value;
   const days=document.getElementById('days').value||'7';
   const ttype=document.getElementById('ttype').value;
+  
   document.getElementById('load-dest').textContent='מתכנן טיול ל'+dest+'...';
   document.getElementById('loading').classList.add('on');
   document.querySelectorAll('.step').forEach(s=>{s.classList.remove('on','done');});
-  animSteps();
-  try{
-    const res=await fetch('https://fragrant-dream-be5a.kushmar.workers.dev/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({destination:dest,adults,kids,days,budget,tripType:ttype})});
-    if(!res.ok){const errBody=await res.text();throw new Error('HTTP '+res.status+': '+errBody);}
-    const trip=JSON.parse(await res.text());
-    renderAll(trip,dest,adults,days);
+
+  const stepEls = ['s1','s2','s3','s4','s5'];
+  let stepIdx = 0;
+  function nextStep() {
+    if (stepIdx > 0) document.getElementById(stepEls[stepIdx-1]).classList.replace('on','done');
+    if (stepIdx < stepEls.length) document.getElementById(stepEls[stepIdx]).classList.add('on');
+    stepIdx++;
+  }
+  nextStep(); // s1
+
+  const API = 'https://fragrant-dream-be5a.kushmar.workers.dev/api/plan';
+  const baseBody = {destination:dest, adults, kids, days, budget, tripType:ttype};
+
+  try {
+    // PART 1 — flights, hotels, first half of days
+    nextStep(); // s2
+    const r1 = await fetch(API, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...baseBody, part:1})});
+    if (!r1.ok) throw new Error('HTTP '+r1.status+': '+await r1.text());
+    const part1 = JSON.parse(await r1.text());
+
+    // PART 2 — rest of days, restaurants, transport, budget, tips
+    nextStep(); // s3
+    const r2 = await fetch(API, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({...baseBody, part:2})});
+    if (!r2.ok) throw new Error('HTTP '+r2.status+': '+await r2.text());
+    const part2 = JSON.parse(await r2.text());
+
+    nextStep(); // s4
+
+    // Merge results
+    const trip = {
+      ...part1,
+      days: [...(part1.days||[]), ...(part2.days||[])],
+      restaurants: part2.restaurants || [],
+      transport: part2.transport || [],
+      budget: part2.budget || part1.budget || {},
+      tips: part2.tips || [],
+    };
+
+    nextStep(); // s5
+    await new Promise(r=>setTimeout(r,400));
+
+    renderAll(trip, dest, adults, days);
     document.getElementById('loading').classList.remove('on');
     document.querySelectorAll('.step').forEach(s=>{s.classList.remove('on','done');});
     document.getElementById('hero').style.display='none';
     document.getElementById('results').style.display='block';
     sw('itinerary',document.querySelector('.tab'));
     window.scrollTo(0,0);
-  }catch(e){
+
+  } catch(e) {
     document.getElementById('loading').classList.remove('on');
-    if(e.message && e.message.includes('JSON')) {
-      alert('הנתונים חזרו חלקיים. נסה שוב עם פחות ימים (3-5 ימים מומלץ).');
-    } else {
-      alert('שגיאה: ' + e.message);
-    }
+    document.querySelectorAll('.step').forEach(s=>{s.classList.remove('on','done');});
+    alert('שגיאה: ' + e.message);
   }
 }
 
@@ -315,7 +355,7 @@ function wikiImg(wikiName, fallbackQ, seed) {
 }
 function setWikiImg(imgEl, wikiName, fallbackQ, seed, modalKey) {
   if (!wikiName) { imgEl.src = uimg(fallbackQ, seed); return; }
-  fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(wikiName.replace(/ /g,'_')))
+  fetch('https://he.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(wikiName.replace(/ /g,'_')))
     .then(r=>r.json())
     .then(d=>{
       const src = (d.originalimage && d.originalimage.source) || (d.thumbnail && d.thumbnail.source);
@@ -591,15 +631,15 @@ document.addEventListener("keydown", e => { if(e.key==="Escape") closeModal(); }
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
       <a id="claude-link" href="#" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(212,130,26,.15);border:1px solid rgba(212,130,26,.3);border-radius:12px;padding:14px;text-decoration:none;transition:all .2s">
         <span style="font-size:24px">⚡</span>
-        <span style="font-size:12px;font-weight:700;color:var(--amber)">Claude</span>
+        <span style="font-size:12px;font-weight:700;color:var(--amber)">קלוד</span>
       </a>
       <a id="gpt-link" href="#" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(74,124,89,.15);border:1px solid rgba(74,124,89,.3);border-radius:12px;padding:14px;text-decoration:none;transition:all .2s">
         <span style="font-size:24px">🟢</span>
-        <span style="font-size:12px;font-weight:700;color:var(--sage)">ChatGPT</span>
+        <span style="font-size:12px;font-weight:700;color:var(--sage)">צ׳אטGPT</span>
       </a>
       <a id="gemini-link" href="#" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(43,108,176,.15);border:1px solid rgba(43,108,176,.3);border-radius:12px;padding:14px;text-decoration:none;transition:all .2s">
         <span style="font-size:24px">💎</span>
-        <span style="font-size:12px;font-weight:700;color:var(--sky)">Gemini</span>
+        <span style="font-size:12px;font-weight:700;color:var(--sky)">ג׳מיני</span>
       </a>
     </div>
   </div>
