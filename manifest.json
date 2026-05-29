@@ -1,0 +1,28 @@
+{
+  "name": "TripLex — מתכנן טיולים חכם",
+  "short_name": "TripLex",
+  "description": "תכנון טיולים חכם עם AI — מחירים אמיתיים, חוויות בלתי נשכחות",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1209",
+  "theme_color": "#D4821A",
+  "orientation": "portrait-primary",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["travel", "lifestyle"],
+  "screenshots": []
+}
