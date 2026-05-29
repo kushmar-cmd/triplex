@@ -295,9 +295,12 @@ function renderAll(t,dest,adults,days){
     '<div class="day-block"><div class="day-hdr"><div class="day-num">0'+day.day+'</div><div class="day-info"><h3>'+day.theme+'</h3><p>📍 '+day.area+'</p></div></div><div class="timeline">'+
     (day.activities||[]).map((a,ai)=>{
       const img=uimg((t.destination_en||dest)+' '+(a.type||'travel'),di*10+ai);
-      const mq=a.maps_query||(a.name+' '+(t?t.destination_en:''));
+      const mq=a.maps_query||(a.name+' '+dest);
       const wiki=a.wiki_summary||'';
-      return '<div class="act-card" onclick="openModal(\''+a.name.replace(/\'/g,\'\\\'\')+'\',\''+a.type+'\',\''+a.description.replace(/\'/g,\'\\\'\')+'\',\''+wiki.replace(/\'/g,\'\\\'\')+'\',\''+mq.replace(/\'/g,\'\\\'\')+'\',\''+img+'\')" ><img class="act-img" src="'+img+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="act-ph" style="display:none">'+a.emoji+'</div><div class="act-body"><div class="act-time">'+a.time+' · '+a.duration+'</div><div class="act-name">'+a.emoji+' '+a.name+'</div><div class="act-desc">'+a.description+'</div><div class="act-footer"><span class="tag ta">'+a.type+'</span>'+(a.tip?'<span class="tag ts">💡 '+a.tip+'</span>':'')+'<span class="act-price">'+(a.price_usd===0?'✓ חינם':a.price_usd?'$'+a.price_usd:'')+'</span><span style="font-size:11px;color:var(--sky);margin-right:auto">לחץ לפרטים ›</span></div></div></div>';
+      const cardId='act-'+di+'-'+ai;
+      window._modalData=window._modalData||{};
+      window._modalData[cardId]={name:a.name,tag:a.type,desc:a.description,wiki:wiki,mq:mq,img:img};
+      return '<div class="act-card" onclick="var d=window._modalData[\''+cardId+'\'];openModal(d.name,d.tag,d.desc,d.wiki,d.mq,d.img)" ><img class="act-img" src="'+img+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="act-ph" style="display:none">'+a.emoji+'</div><div class="act-body"><div class="act-time">'+a.time+' · '+a.duration+'</div><div class="act-name">'+a.emoji+' '+a.name+'</div><div class="act-desc">'+a.description+'</div><div class="act-footer"><span class="tag ta">'+a.type+'</span>'+(a.tip?'<span class="tag ts">💡 '+a.tip+'</span>':'')+'<span class="act-price">'+(a.price_usd===0?'✓ חינם':a.price_usd?'$'+a.price_usd:'')+'</span><span style="font-size:11px;color:var(--sky);margin-right:auto">לחץ לפרטים ›</span></div></div></div>';
     }).join('')+'</div></div>'
   ).join('');
 
@@ -311,9 +314,12 @@ function renderAll(t,dest,adults,days){
   // RESTAURANTS
   document.getElementById('c-rest').innerHTML='<div class="rest-grid">'+(t.restaurants||[]).map((r,i)=>{
     const img=uimg((t.destination_en||dest)+' restaurant '+(r.cuisine||'food'),100+i);
-    const rmq=r.maps_query||(r.name+' restaurant '+(t?t.destination_en:''));
+    const rmq=r.maps_query||(r.name+' restaurant '+dest);
     const rdesc=r.description||r.why||'';
-    return '<div class="rest-card" onclick="openModal(\''+r.name.replace(/\'/g,\'\\\'\')+'\',\''+r.cuisine+' · '+r.price_range+'\',\''+rdesc.replace(/\'/g,\'\\\'\')+'\',\'חובה לנסות: '+r.must_order+'\',\''+rmq.replace(/\'/g,\'\\\'\')+'\',\''+img+'\')" ><img class="rest-img" src="'+img+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="rest-ph" style="display:none">🍽</div><div class="rest-body"><div class="rest-name">'+r.name+'</div><div class="stars">'+'★'.repeat(Math.round(r.rating||4))+'☆'.repeat(5-Math.round(r.rating||4))+' '+r.rating+'</div><div class="rest-tags"><span class="tag ta">'+r.cuisine+'</span><span class="tag tb">'+r.area+'</span><span class="tag ts">'+r.price_range+'</span></div>'+(r.must_order?'<p style="font-size:12px;color:#6b5c3e;margin-bottom:5px">🍴 חובה: '+r.must_order+'</p>':'')+(r.why?'<p style="font-size:12px;color:#4a3c28">'+r.why+'</p>':'')+'<p style="font-size:11px;color:var(--sky);margin-top:6px">לחץ לפרטים ›</p></div></div>';
+    const restId='rest-'+i;
+    window._modalData=window._modalData||{};
+    window._modalData[restId]={name:r.name,tag:r.cuisine+' · '+r.price_range,desc:rdesc,wiki:'חובה לנסות: '+(r.must_order||''),mq:rmq,img:img};
+    return '<div class="rest-card" onclick="var d=window._modalData[\''+restId+'\'];openModal(d.name,d.tag,d.desc,d.wiki,d.mq,d.img)" ><img class="rest-img" src="'+img+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'"><div class="rest-ph" style="display:none">🍽</div><div class="rest-body"><div class="rest-name">'+r.name+'</div><div class="stars">'+'★'.repeat(Math.round(r.rating||4))+'☆'.repeat(5-Math.round(r.rating||4))+' '+r.rating+'</div><div class="rest-tags"><span class="tag ta">'+r.cuisine+'</span><span class="tag tb">'+r.area+'</span><span class="tag ts">'+r.price_range+'</span></div>'+(r.must_order?'<p style="font-size:12px;color:#6b5c3e;margin-bottom:5px">🍴 חובה: '+r.must_order+'</p>':'')+(r.why?'<p style="font-size:12px;color:#4a3c28">'+r.why+'</p>':'')+'<p style="font-size:11px;color:var(--sky);margin-top:6px">לחץ לפרטים ›</p></div></div>';
   }).join('')+'</div>';
 
   // TRANSPORT
@@ -333,6 +339,27 @@ function renderAll(t,dest,adults,days){
     '<div class="tips-box"><h4>אפליקציות חובה</h4><div class="tip-row">Google Maps / Maps.me — ניווט ללא אינטרנט</div><div class="tip-row">XE Currency — המרת מטבעות</div><div class="tip-row">Google Translate — כולל מצלמה לתרגום שלטים</div><div class="tip-row">TripAdvisor — חוות דעת מסעדות</div></div>'+
     '<div class="tips-box"><h4>ביטוח נסיעות</h4><div class="tip-row">חובה: ביטול טיסה + אשפוז רפואי</div><div class="tip-row">השווה: Harel, Migdal, Phoenix — $30-80 לנפש</div></div>';
 }
+
+
+// Modal functions
+function openModal(name, tag, desc, wiki, mapsQuery, img) {
+  document.getElementById("modal-name").textContent = name;
+  document.getElementById("modal-tag").textContent = tag;
+  document.getElementById("modal-desc").textContent = desc;
+  document.getElementById("modal-wiki-text").textContent = wiki || "מידע נוסף זמין בחיפוש Google.";
+  document.getElementById("modal-img").src = img || "";
+  const mapsUrl = "https://www.google.com/maps/search/" + encodeURIComponent(mapsQuery || name);
+  const searchUrl = "https://www.google.com/search?q=" + encodeURIComponent(name);
+  document.getElementById("modal-map-btn").href = mapsUrl;
+  document.getElementById("modal-search-btn").href = searchUrl;
+  document.getElementById("modal-overlay").classList.add("on");
+  document.body.style.overflow = "hidden";
+}
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("on");
+  document.body.style.overflow = "";
+}
+document.addEventListener("keydown", e => { if(e.key==="Escape") closeModal(); });
 </script>
 
 <!-- MODAL -->
@@ -350,8 +377,9 @@ function renderAll(t,dest,adults,days){
     </div>
   </div>
 </div>
-<script>
-function openModal(name, tag, desc, wiki, mapsQuery, img) {
+<!-- modal js already above -->
+<script style="display:none">
+function _noop() {
   document.getElementById('modal-name').textContent = name;
   document.getElementById('modal-tag').textContent = tag;
   document.getElementById('modal-desc').textContent = desc;
@@ -364,10 +392,5 @@ function openModal(name, tag, desc, wiki, mapsQuery, img) {
   document.getElementById('modal-overlay').classList.add('on');
   document.body.style.overflow = 'hidden';
 }
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('on');
-  document.body.style.overflow = '';
-}
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
 </script></body>
 </html>
