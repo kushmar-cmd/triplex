@@ -2,6 +2,13 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TripLex">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#D4821A">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>TripLex — מתכנן טיולים חכם</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -217,8 +224,8 @@ input::placeholder{text-align:right;direction:rtl}
   <div class="load-sub">AI מאסף מידע ובונה מסלול אישי</div>
   <div class="steps">
     <div class="step" id="s1"><div class="step-dot"></div>✈ מחפש טיסות ומלונות</div>
-    <div class="step" id="s2"><div class="step-dot"></div>🗓 בונה ימים 1-4 של המסלול</div>
-    <div class="step" id="s3"><div class="step-dot"></div>🗓 בונה את שאר ימי המסלול</div>
+    <div class="step" id="s2"><div class="step-dot"></div>🗓 בונה ימים 1-3 של המסלול</div>
+    <div class="step" id="s3"><div class="step-dot"></div>🗓 בונה ימים 4-7 של המסלול</div>
     <div class="step" id="s4"><div class="step-dot"></div>🍽 מוסיף מסעדות ותחבורה</div>
     <div class="step" id="s5"><div class="step-dot"></div>✨ מסיים ומעצב</div>
   </div>
@@ -676,5 +683,12 @@ function _noop() {
   document.getElementById('modal-overlay').classList.add('on');
   document.body.style.overflow = 'hidden';
 }
-</script></body>
+</script><script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
 </html>
