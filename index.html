@@ -275,7 +275,11 @@ async function planTrip(){
     window.scrollTo(0,0);
   }catch(e){
     document.getElementById('loading').classList.remove('on');
-    alert('שגיאה: ' + e.message);
+    if(e.message && e.message.includes('JSON')) {
+      alert('הנתונים חזרו חלקיים. נסה שוב עם פחות ימים (3-5 ימים מומלץ).');
+    } else {
+      alert('שגיאה: ' + e.message);
+    }
   }
 }
 
