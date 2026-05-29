@@ -234,16 +234,12 @@ input::placeholder{text-align:right;direction:rtl}
         <button onclick="exportMD()" style="background:var(--amber);border:none;border-radius:20px;padding:8px 18px;color:var(--ink);font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#128196; ייצא מסלול</button>
         <button onclick="showAIShare()" style="background:#8e44ad;border:none;border-radius:20px;padding:8px 18px;color:white;font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#129302; הרחב עם AI</button>
       </div>
-        <button onclick="exportMD()" style="background:var(--amber);border:none;border-radius:20px;padding:8px 18px;color:var(--ink);font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#128196; ייצא מסלול</button>
-        <button onclick="showAIShare()" style="background:#8e44ad;border:none;border-radius:20px;padding:8px 18px;color:white;font-family:Heebo;font-size:13px;font-weight:700;cursor:pointer">&#129302; הרחב עם AI</button>
-      </div>
       <div class="trip-name" id="r-name">TOKYO <span>&#x2708;</span></div>
       <div class="meta-row" id="r-meta"></div>
     </div>
   </div>
   <div class="tabs">
     <button class="tab active" onclick="sw('itinerary',this)">מסלול</button>
-    <button class="tab on" onclick="sw('itinerary',this)">מסלול</button>
     <button class="tab" onclick="sw('flights',this)">טיסות</button>
     <button class="tab" onclick="sw('restaurants',this)">מסעדות</button>
     <button class="tab" onclick="sw('hotels',this)">מלונות</button>
@@ -333,12 +329,12 @@ async function planTrip(){
     nextStep(); // s5
     await new Promise(r=>setTimeout(r,400));
 
-    renderAll(trip, dest, adults, days);
     document.getElementById('loading').classList.remove('on');
     document.querySelectorAll('.step').forEach(s=>{s.classList.remove('on','done');});
     document.getElementById('hero').style.display='none';
     document.getElementById('results').style.display='block';
     sw('itinerary',document.querySelector('.tab'));
+    renderAll(trip, dest, adults, days);
     window.scrollTo(0,0);
 
   } catch(e) {
