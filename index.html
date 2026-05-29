@@ -133,7 +133,7 @@ input::placeholder{text-align:right;direction:rtl}
 #modal-close{position:absolute;top:14px;left:14px;background:none;border:none;font-size:24px;cursor:pointer;color:#888;line-height:1}
 #modal-name{font-family:"Playfair Display",serif;font-size:22px;color:var(--ink);margin-bottom:6px}
 #modal-tag{font-size:11px;color:var(--amber);font-weight:700;margin-bottom:14px;text-transform:uppercase;letter-spacing:.08em}
-#modal-img{width:100%;height:190px;object-fit:cover;border-radius:14px;margin-bottom:16px}
+#modal-img{width:100%;height:190px;object-fit:cover;border-radius:14px;margin-bottom:16px;background:linear-gradient(135deg,#f0e5cc,#dcc99a)}
 #modal-desc{font-size:14px;color:#4a3c28;line-height:1.7;margin-bottom:14px}
 #modal-wiki{background:#f8f5ee;border-radius:12px;padding:14px;font-size:13px;color:#6b5c3e;line-height:1.6;margin-bottom:16px;border-right:3px solid var(--amber)}
 #modal-wiki b{color:var(--ink);display:block;margin-bottom:4px}
@@ -304,19 +304,27 @@ async function planTrip(){
   }
 }
 
-function uimg(q,s){return 'https://source.unsplash.com/400x300/?'+encodeURIComponent(q)+'&sig='+s;}
+function uimg(q,s){
+  // Picsum: reliable, fast, no API key needed
+  // Use seed for consistent image per location
+  return 'https://picsum.photos/seed/'+encodeURIComponent(q.replace(/\s+/g,'-').substring(0,30))+s+'/400/250';
+}
 function wikiImg(wikiName, fallbackQ, seed) {
   if (!wikiName) return uimg(fallbackQ, seed);
   return 'https://en.wikipedia.org/w/api.php?action=query&titles='+encodeURIComponent(wikiName)+'&prop=pageimages&format=json&pithumbsize=400&origin=*';
 }
-function setWikiImg(imgEl, wikiName, fallbackQ, seed) {
+function setWikiImg(imgEl, wikiName, fallbackQ, seed, modalKey) {
   if (!wikiName) { imgEl.src = uimg(fallbackQ, seed); return; }
-  // Use Wikipedia REST API which supports CORS
   fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(wikiName.replace(/ /g,'_')))
     .then(r=>r.json())
     .then(d=>{
-      const src = d.thumbnail && d.thumbnail.source;
-      imgEl.src = src || uimg(fallbackQ, seed);
+      const src = (d.originalimage && d.originalimage.source) || (d.thumbnail && d.thumbnail.source);
+      const finalSrc = src || uimg(fallbackQ, seed);
+      imgEl.src = finalSrc;
+      // Also update _modalData so modal shows correct image
+      if (modalKey && window._modalData && window._modalData[modalKey]) {
+        window._modalData[modalKey].img = finalSrc;
+      }
     })
     .catch(()=>{ imgEl.src = uimg(fallbackQ, seed); });
 }
@@ -364,7 +372,7 @@ function renderAll(t,dest,adults,days){
       (day.activities||[]).forEach((a, ai) => {
         const imgEl = document.getElementById('aimg-'+di+'-'+ai);
         if (imgEl && a.wiki_name) {
-          setWikiImg(imgEl, a.wiki_name, (t.destination_en||dest)+' '+(a.type||'travel'), di*10+ai);
+          setWikiImg(imgEl, a.wiki_name, (t.destination_en||dest)+' '+(a.type||'travel'), di*10+ai, 'act-'+di+'-'+ai);
         }
       });
     });
